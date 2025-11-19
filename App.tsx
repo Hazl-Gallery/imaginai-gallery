@@ -6,14 +6,39 @@ import { GeneratedImage } from './types';
 import { generateImageFromPrompt } from './services/gemini';
 import { Zap } from 'lucide-react';
 
+const STORAGE_KEY = 'imaginai-gallery-images';
+
 const App: React.FC = () => {
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load some examples or local storage could go here
-  // For now, we start empty or with a clean slate
+  useEffect(() => {
+    try {
+      const savedImages = localStorage.getItem(STORAGE_KEY);
+      if (savedImages) {
+        const parsedImages = JSON.parse(savedImages);
+        setImages(parsedImages);
+      }
+    } catch (err) {
+      console.error('Failed to load images from localStorage:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (images.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(images));
+      }
+    } catch (err) {
+      console.error('Failed to save images to localStorage:', err);
+      if (err instanceof Error && err.name === 'QuotaExceededError') {
+        setError('Storage limit reached. Some images may not be saved.');
+      }
+    }
+  }, [images]);
+
   useEffect(() => {
     // Animation/Styles
     const style = document.createElement('style');
