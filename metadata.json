@@ -1,0 +1,5 @@
+{
+  "name": "ImaginAI Gallery",
+  "description": "A Pinterest-style AI image generation gallery using Gemini's nano banana model.",
+  "requestFramePermissions": []
+}
