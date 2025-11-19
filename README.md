@@ -33,9 +33,9 @@ View your app in AI Studio: https://ai.studio/apps/drive/1u6SeMEAFwYjRgvJXd6vQYr
 
 **Prerequisites:** Docker and Docker Compose
 
-1. Set your API key:
-   ```bash
-   export GEMINI_API_KEY=your_api_key_here
+1. Create `.env` file with your API key:
+   ```
+   GEMINI_API_KEY=your_api_key_here
    ```
 
 2. Build and run:
