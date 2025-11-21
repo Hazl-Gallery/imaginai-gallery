@@ -1,43 +1,46 @@
-import { GoogleGenAI, Modality } from "@google/genai";
-
-// Initialize the Gemini client
-// Note: In a real production app, handle API keys securely on a backend.
-// Here we assume it is injected via environment variable as per instructions.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { GeneratedImage } from '../types';
 
 /**
- * Generates an image using the 'nano banana' (gemini-2.5-flash-image) model.
+ * Generates an image via backend API
  * @param prompt The text description for the image.
- * @returns The Base64 data URL of the generated image.
+ * @returns The generated image metadata
  */
-export const generateImageFromPrompt = async (prompt: string): Promise<string> => {
+export const generateImageFromPrompt = async (prompt: string): Promise<GeneratedImage> => {
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          {
-            text: prompt,
-          },
-        ],
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      config: {
-        responseModalities: [Modality.IMAGE],
-      },
+      body: JSON.stringify({ prompt }),
     });
 
-    // Extract the image data from the response
-    const part = response.candidates?.[0]?.content?.parts?.[0];
-    
-    if (part && part.inlineData && part.inlineData.data) {
-      const base64ImageBytes = part.inlineData.data;
-      const mimeType = part.inlineData.mimeType || 'image/png';
-      return `data:${mimeType};base64,${base64ImageBytes}`;
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
     }
 
-    throw new Error("No image data returned from Gemini API.");
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error generating image:", error);
     throw error;
+  }
+};
+
+/**
+ * Fetches all previously generated images
+ * @returns Array of generated images
+ */
+export const fetchImages = async (): Promise<GeneratedImage[]> => {
+  try {
+    const response = await fetch('/api/images');
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching images:", error);
+    return [];
   }
 };

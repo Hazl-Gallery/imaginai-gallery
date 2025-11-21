@@ -14,11 +14,16 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-RUN npm install -g serve
+COPY package*.json ./
+
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist-server ./dist-server
+
+RUN mkdir -p generated-images
 
 EXPOSE 3000
 
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["node", "dist-server/server.js"]
 

@@ -3,10 +3,8 @@ import { SearchBar } from './components/SearchBar';
 import { MasonryGrid } from './components/MasonryGrid';
 import { Modal } from './components/Modal';
 import { GeneratedImage } from './types';
-import { generateImageFromPrompt } from './services/gemini';
+import { generateImageFromPrompt, fetchImages } from './services/gemini';
 import { Zap } from 'lucide-react';
-
-const STORAGE_KEY = 'imaginai-gallery-images';
 
 const App: React.FC = () => {
   const [images, setImages] = useState<GeneratedImage[]>([]);
@@ -15,29 +13,16 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const savedImages = localStorage.getItem(STORAGE_KEY);
-      if (savedImages) {
-        const parsedImages = JSON.parse(savedImages);
-        setImages(parsedImages);
+    const loadImages = async () => {
+      try {
+        const loadedImages = await fetchImages();
+        setImages(loadedImages);
+      } catch (err) {
+        console.error('Failed to load images from server:', err);
       }
-    } catch (err) {
-      console.error('Failed to load images from localStorage:', err);
-    }
+    };
+    loadImages();
   }, []);
-
-  useEffect(() => {
-    try {
-      if (images.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(images));
-      }
-    } catch (err) {
-      console.error('Failed to save images to localStorage:', err);
-      if (err instanceof Error && err.name === 'QuotaExceededError') {
-        setError('Storage limit reached. Some images may not be saved.');
-      }
-    }
-  }, [images]);
 
   useEffect(() => {
     // Animation/Styles
@@ -73,15 +58,7 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const imageUrl = await generateImageFromPrompt(prompt);
-      
-      const newImage: GeneratedImage = {
-        id: Date.now().toString(),
-        url: imageUrl,
-        prompt: prompt,
-        createdAt: Date.now(),
-      };
-
+      const newImage = await generateImageFromPrompt(prompt);
       setImages(prev => [newImage, ...prev]);
     } catch (err) {
       setError("Failed to generate image. Please try again.");
